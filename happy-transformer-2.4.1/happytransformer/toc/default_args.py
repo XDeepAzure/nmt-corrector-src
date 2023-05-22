@@ -1,0 +1,5 @@
+ARGS_TOC_TRAIN = {}
+
+ARGS_TOC_EVAl = {}
+
+ARGS_TOC_TEST = {}
