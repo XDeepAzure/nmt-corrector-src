@@ -23,6 +23,7 @@ from transformers import (Seq2SeqTrainingArguments,
                           MBartForConditionalGeneration,
                           M2M100ForConditionalGeneration,
                           AutoModelForSeq2SeqLM,
+                          MT5ForConditionalGeneration
                           )
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,8 @@ PRETRAINED_MODEL = (
                     # "facebook/mbart-large-cc25",
                     "facebook/mbart-large-50", 
                     "facebook/mbart-large-50-many-to-many-mmt",
-                    "facebook/nllb-200-distilled-600M")
+                    "facebook/nllb-200-distilled-600M",
+                    "mt5-small")
 
 EVALUATE_METRICS = ("bleu",                                 # 使用scarebleu, tokenizer使用的是flores101的
                     "chrf",                                 # 使用chrf++
@@ -178,6 +180,9 @@ def parse_args():
         "--save_steps", type=int, default=2000
     )
     parser.add_argument(
+        "--evaluation_strategy", type=str, default="no"
+    )
+    parser.add_argument(
         "--logging_steps", type=int, default=250
     )
     parser.add_argument(
@@ -202,7 +207,7 @@ def parse_args():
         "--test_dataset", type=str, default="flores", help="在train和retrain里决定是否用flores的dev和test集"
     )
     parser.add_argument(
-        "--name", type=str, default="cor10w", help="标识此实验是干嘛的"
+        "--name", type=str, default="cor10w", help="标识此次训练是干嘛的"
     )
     parser.add_argument(
         "--num_train_sentence", type=str, default="", help="再训练的使用的数据量，可以表示实验"
@@ -528,6 +533,8 @@ def get_model(args, config=None, forced_bos_token_id=None):
             model_type = MBartForConditionalGeneration
         elif args.model_name == PRETRAINED_MODEL[2]:
             model_type = M2M100ForConditionalGeneration
+        elif args.model_name == PRETRAINED_MODEL[3]:
+            model_type = MT5ForConditionalGeneration
     logger.info(path)
     
     model = model_type.from_pretrained(path)
@@ -540,10 +547,7 @@ def get_model(args, config=None, forced_bos_token_id=None):
         encoder = model.get_encoder()
         for name, param in encoder.named_parameters():
             param.requires_grad = False
-    # ! 将encoder的前几层也固定住
-    # encoder = model.get_encoder().layers[:6]
-    # for name, param in encoder.named_parameters():
-    #         param.requires_grad = False
+
             
     logger.critical("Number of parameters (model): %i" % sum([p.numel() for p in model.parameters() if p.requires_grad]))
     logger.info(model)
@@ -559,7 +563,7 @@ def get_training_args(args):
     else:
         training_args = Seq2SeqTrainingArguments(
             output_dir=args.saved_dir,
-            evaluation_strategy="steps",
+            evaluation_strategy=args.evaluation_strategy if hasattr(args, "evaluation_strategy") else  "steps",
             learning_rate=args.lr if hasattr(args, "lr") else 2e-5,
             per_device_eval_batch_size=args.eval_batch_size if hasattr(args, "eval_batch_size") and args.eval_batch_size>args.batch_size else args.batch_size,
             per_device_train_batch_size=args.batch_size,

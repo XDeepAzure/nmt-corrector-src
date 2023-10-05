@@ -1,0 +1,14 @@
+{
+    "Token":"cpI2kDtsR_VkdrIKxPHcsQ",
+    "business_flag": "AILab_Game_Report_PaaS",
+    "host_num": 1,
+    "host_gpu_num": 1,
+    "image_full_name": "mirrors.tencent.com/hayuxu/transformers4.33-py3.11-torch2.0-cuda11:base",
+    "model_local_file_path": "/apdcephfs/private_hayuxu/nmt-corrector-src",
+    "exec_start_in_all_mpi_pods": true,
+    "GPUName": "V100",
+    "task_flag": "mt5-nmt",
+    "cuda_version": "11.0",
+    "start_cmd":"bash start.sh",
+    "is_elasticity": false
+}

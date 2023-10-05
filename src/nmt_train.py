@@ -1,12 +1,12 @@
 """
 训练一个NMT模型， 现在支持的预训练模型有:
-[facebook/mbart-large-cc25, microsoft/xlm-align-base,facebook/mbart-large-50, facebook/mbart-large-50-many-to-many-mmt]
+[facebook/mbart-large-cc25, microsoft/xlm-align-base,facebook/mbart-large-50, facebook/mbart-large-50-many-to-many-mmt,
+
+ MT5-small]
 """
 
-import json
 import torch
 import os
-import argparse
 
 from transformers import (
                           AutoConfig,
@@ -42,6 +42,7 @@ def check_params(args):
 
     if args.tokenizer != "":
         args.tokenizer = os.path.join(args.data_dir, args.tokenizer)
+    
     if args.tokenized_datasets != '':
         args.tokenized_datasets = os.path.join(args.data_dir, args.tokenized_datasets)
         exists(args.tokenized_datasets)
@@ -77,7 +78,7 @@ def load_tokenized_datasets(args, tokenizer=None):
         path = args.tokenized_datasets
         logger.info(f"load tokenized_datasets form {path}")
         datasets = torch.load(path)
-    elif len(args.src_file) > 1:
+    elif len(args.src_file) >= 1:
         def get_dataset(src_f, tgt_f, batch_size):
             trans_para = get_translate_paras_from_file(src_f, tgt_f)
             datasets = get_tokenized_datasets(tokenizer, trans_para, args.src_lang_code, args.tgt_lang_code,
@@ -118,30 +119,6 @@ def set_model_config(args, tokenizer):
     logger.info(config)
     return config
 
-def load_encoder_weight(encoder_weight_path, model, config):
-    """用xlm-roberta的参数初始化encoder和lm_head"""
-    model_state_dict = torch.load(encoder_weight_path)
-    encoder_state_dict = {k[len("roberta."):]:v 
-                          for k, v in model_state_dict.items()
-                          if k.startswith("roberta.")}
-    for i in range(config.encoder_layers):      # encoder层数改变的时候，为没有参数的层添加到字典中
-        for name in ENCODER_LAYER_KEY:
-            if name % i not in encoder_state_dict:
-                encoder_state_dict[name % i] = model.encoder.state_dict()[name % i]
-    
-    model.encoder.load_state_dict(encoder_state_dict)
-    lm_state_dict = {k[len("lm_head."):]:v 
-                     for k, v in model_state_dict.items()
-                     if k.startswith("lm_head.")}
-    model.lm_head.load_state_dict(lm_state_dict)
-
-def load_decoder_weight(decoder_weight_path, model, config):
-    """"""
-    pass
-def set_generation_config(args, tokenizer, model):
-    model.generation_config.forced_bos_token_id = tokenizer.lang_code_to_id[args.tgt_lang_code]
-    pass
-
 def init_exp(args):
     log_name='train.log'
     des=f"训练{args.source_lang}-{args.target_lang}基线的实验"
@@ -168,14 +145,13 @@ def main():
     ## ! 加载模型
     model = get_model(args, config)
     data_collator = get_data_collator(args, tokenizer, model=model)
-    if isinstance(model, M2M100ForConditionalGeneration):                              ## ! 似乎在这里指定没有用
-        set_generation_config(args, tokenizer, model)
+
     trainer = Seq2SeqTrainer(
         model = model,
         args = training_args,
         tokenizer=tokenizer,
         train_dataset=tokenized_datasets['train'],
-        eval_dataset=tokenized_datasets['valid'],
+        eval_dataset=tokenized_datasets['valid'] if "valid" in tokenized_datasets.keys() else None,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         callbacks=callbacks,
@@ -188,8 +164,6 @@ def main():
 
     logger.info(f"trainer_output => {trainer_output}")
     
-    logger.critical("为args的metrics加上ter、chrf")
-    args.evaluate_metrics += ["ter", "chrf"]
     trainer.compute_metrics = get_compute_metrics(args, tokenizer)
     
     logger.info('evaluating')

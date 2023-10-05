@@ -1,14 +1,13 @@
 
-echo "环境是env"
 # CUDA_VISIBLE_DEVICES="4"  
-python3 ./src/nmt_train.py \
-    --source_lang en \
-    --target_lang sl \
-    --src_lang_code "en_XX" \
-    --tgt_lang_code ""sl_SI \
-    --model_name "facebook/mbart-large-50"  \
+python ./src/nmt_train.py \
+    --source_lang zh \
+    --target_lang en \
+    --src_lang_code zh \
+    --tgt_lang_code en \
+    --model_name "mt5-small"  \
     --num_beams 0  \
-    --saved_dir 'checkpoint-nmt' \
+    --saved_dir '/apdcephfs_cq2/share_1567347/hayuxu/models' \
     --resume_from_checkpoint '' \
     --lr 2e-5 \
     --warmup_steps 100  \
@@ -17,17 +16,18 @@ python3 ./src/nmt_train.py \
     --gradient_accumulation_steps 2 \
     --max_sentence_length 256   \
     --max_generate_length 256   \
-    --src_file 'total.en-sl.en,en'   \
-    --tgt_file 'total.en-sl.sl,sl'   \
-    --eval_steps 2000 \
-    --save_steps 2000 \
+    --src_file 'en-zh.zh'   \
+    --tgt_file 'en-zh.en'   \
+    --eval_steps 10 \
+    --evaluation_strategy "no"\
+    --save_steps 10 \
     --evaluate_metrics 'bleu'\
     --bleu_tokenize '' \
     --early_stopping_patience 15 \
-    --pretrained_model "/public/home/hongy/pre-train_model"   \
-    --data_dir 'data/en-sl/'  \
-    --test_dataset opus  \
-    --name 'total'     \
+    --pretrained_model "/apdcephfs_cq2/share_1567347/hayuxu/models"   \
+    --data_dir '/apdcephfs_cq2/share_1567347/hayuxu/data/nmt/zh-en/ELRC_2922'  \
+    --test_dataset no  \
+    --name 'test'     \
 
     
     # --src_lang_code "en_XX" \
