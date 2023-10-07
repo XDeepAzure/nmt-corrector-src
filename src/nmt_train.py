@@ -140,7 +140,9 @@ def main():
     config = set_model_config(args, tokenizer)
 
     training_args = get_training_args(args)
-    callbacks = [EarlyStoppingCallback(early_stopping_patience=args.early_stopping_patience),]
+    callbacks = []
+    if args.early_stopping_patience > 0:
+        callbacks = [EarlyStoppingCallback(early_stopping_patience=args.early_stopping_patience),]
     compute_metrics = get_compute_metrics(args, tokenizer)
     ## ! 加载模型
     model = get_model(args, config)

@@ -1,3 +1,4 @@
 /chpk-nmt
 /data
 /log
+/src/__pycache__/*
