@@ -1,5 +1,6 @@
 import argparse
 from collections import Counter
+from dataclasses import dataclass, field
 from datetime import timedelta
 import json
 import math
@@ -224,6 +225,10 @@ def parse_args():
     )
     args = parser.parse_args()
     return args
+
+@dataclass
+class TrainArguments(object):
+    output_dir: str = field(default="./")
 
 
 def avg(x):
@@ -579,7 +584,7 @@ def get_training_args(args):
             fp16_opt_level=args.fp16_opt_level if hasattr(args, "fp16_opt_level") else "O3",
             half_precision_backend="auto",
             label_smoothing_factor=args.label_smoothing_factor if hasattr(args, "label_smoothing_factor") else 0,
-            load_best_model_at_end=True,
+            load_best_model_at_end=getattr(args, "load_best_model_at_end", False),
             eval_steps=args.eval_steps if hasattr(args, "eval_steps") else 5000,
             save_steps=args.save_steps if hasattr(args, "save_steps") else 5000,
             warmup_steps=args.warmup_steps if hasattr(args, "warmup_steps") else 100,

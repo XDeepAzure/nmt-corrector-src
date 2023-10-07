@@ -19,11 +19,11 @@ python ./src/nmt_train.py \
     --src_file 'en-zh.zh'   \
     --tgt_file 'en-zh.en'   \
     --eval_steps 10 \
-    --evaluation_strategy "no"\
+    --evaluation_strategy no \
     --save_steps 10 \
     --evaluate_metrics 'bleu'\
     --bleu_tokenize '' \
-    --early_stopping_patience 15 \
+    --early_stopping_patience 0 \
     --pretrained_model "/apdcephfs_cq2/share_1567347/hayuxu/models"   \
     --data_dir '/apdcephfs_cq2/share_1567347/hayuxu/data/nmt/zh-en/ELRC_2922'  \
     --test_dataset no  \
